@@ -7,6 +7,7 @@ let server
 before(async () => {
     server = await createServer({
         appType: 'custom',
+        configFile: false,
         logLevel: 'silent',
         server: {
             middlewareMode: true,
