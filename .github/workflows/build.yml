@@ -3,7 +3,14 @@ name: Release
 on:
   push:
     branches:
-      - '**'
+      - master
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-build-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -24,7 +31,8 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: pnpm
 
-      - run: pnpm install
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm run lint
@@ -35,7 +43,7 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Git commit
+      - name: Commit generated build
         id: commit
         run: |
           git config --local user.email github-actions[bot]@users.noreply.github.com
@@ -43,16 +51,14 @@ jobs:
           git config --global core.autocrlf true
           git config --global core.safecrlf false
           git add .
-          git commit -m "chore: ci build" -a
-        continue-on-error: true
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: ci build"
+          echo "created=true" >> "$GITHUB_OUTPUT"
 
-      - name: Git push
-        uses: ad-m/github-push-action@master
-        if: ${{ steps.commit.outcome == 'success' }}
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+      - name: Push generated build
+        if: steps.commit.outputs.created == 'true'
+        run: git push origin HEAD:${{ github.ref_name }}
 
       - name: Log
-        if: ${{ steps.commit.outcome != 'success' }}
+        if: steps.commit.outputs.created != 'true'
         run: echo Nothing to commit.
