@@ -1,18 +1,11 @@
 import assert from 'node:assert/strict'
 import { after, before, test } from 'node:test'
-import { createServer } from 'vite'
+import { createTestServer } from './helpers/vite.mjs'
 
 let server
 
 before(async () => {
-    server = await createServer({
-        appType: 'custom',
-        configFile: false,
-        logLevel: 'silent',
-        server: {
-            middlewareMode: true,
-        },
-    })
+    server = await createTestServer()
 })
 
 after(async () => {
