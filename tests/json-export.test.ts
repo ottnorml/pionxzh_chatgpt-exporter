@@ -54,7 +54,7 @@ vi.mock('../src/utils/download', () => ({
     getFileNameWithFormat: () => 'conversation.json',
 }))
 
-const { exportAllToJson, exportToJson } = await import('../src/exporter/json')
+const { exportAllToJson, exportAllToOfficialJson, exportToJson } = await import('../src/exporter/json')
 
 function createRawConversation(): ApiConversationWithId {
     return {
@@ -114,6 +114,20 @@ describe('json exports', () => {
         mocks.getCurrentChatId.mockResolvedValue('chat-id')
 
         await exportToJson('{title}')
+
+        expect(mocks.processConversation).not.toHaveBeenCalled()
+        expect(rawConversation).toEqual(expected)
+
+        const [, mimeType, content] = mocks.downloadFile.mock.calls[0]
+        expect(mimeType).toBe('application/json')
+        expect(JSON.parse(content)).toEqual([expected])
+    })
+
+    it('serializes untouched raw conversations in official batch JSON exports', async () => {
+        const rawConversation = createRawConversation()
+        const expected = structuredClone(rawConversation)
+
+        await exportAllToOfficialJson('{title}', [rawConversation])
 
         expect(mocks.processConversation).not.toHaveBeenCalled()
         expect(rawConversation).toEqual(expected)
