@@ -875,9 +875,10 @@ interface ExportDialogProps {
     format: string
     open: boolean
     onOpenChange: (value: boolean) => void
+    onCloseAutoFocus?: (event: Event) => void
 }
 
-export const ExportDialog: FC<ExportDialogProps> = ({ format, open, onOpenChange, children }) => {
+export const ExportDialog: FC<ExportDialogProps> = ({ format, open, onOpenChange, onCloseAutoFocus, children }) => {
     const guardClose = (e: Event) => {
         if (exportingRef.current) e.preventDefault()
     }
@@ -890,15 +891,18 @@ export const ExportDialog: FC<ExportDialogProps> = ({ format, open, onOpenChange
                 onOpenChange(val)
             }}
         >
-            <Dialog.Trigger asChild>
-                {children}
-            </Dialog.Trigger>
+            {children && (
+                <Dialog.Trigger asChild>
+                    {children}
+                </Dialog.Trigger>
+            )}
             <Dialog.Portal>
                 <Dialog.Overlay className="DialogOverlay" />
                 <Dialog.Content
                     className="DialogContent _export"
                     onEscapeKeyDown={guardClose}
                     onInteractOutside={guardClose}
+                    onCloseAutoFocus={onCloseAutoFocus}
                 >
                     {open && <DialogContent format={format} />}
                 </Dialog.Content>

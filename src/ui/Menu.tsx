@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import * as HoverCard from '@radix-ui/react-hover-card'
-import { useCallback, useEffect, useMemo, useState } from 'preact/hooks'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { useTranslation } from 'react-i18next'
 import { exportToHtml } from '../exporter/html'
 import { exportToPng } from '../exporter/image'
@@ -80,6 +80,8 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
     const [jsonOpen, setJsonOpen] = useState(false)
     const [exportOpen, setExportOpen] = useState(false)
     const [settingOpen, setSettingOpen] = useState(false)
+    const menuTriggerRef = useRef<HTMLAnchorElement>(null)
+    const suppressRestoreFocusOpenRef = useRef(false)
 
     const {
         format,
@@ -105,8 +107,34 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
     const onClickMarkdown = useCallback(() => exportToMarkdown(format, metaList), [format, metaList])
     const onClickHtml = useCallback(() => exportToHtml(format, metaList), [format, metaList])
     const onClickJSON = useCallback(() => {
+        setOpen(false)
         setJsonOpen(true)
         return true
+    }, [])
+    const onClickSetting = useCallback(() => {
+        setOpen(false)
+        setSettingOpen(true)
+        return true
+    }, [])
+    const onClickExport = useCallback(() => {
+        setOpen(false)
+        setExportOpen(true)
+        return true
+    }, [])
+    const onMenuOpenChange = useCallback((nextOpen: boolean) => {
+        if (nextOpen && suppressRestoreFocusOpenRef.current) {
+            suppressRestoreFocusOpenRef.current = false
+            return
+        }
+        setOpen(nextOpen)
+    }, [])
+    const restoreMenuFocus = useCallback((event: Event) => {
+        event.preventDefault()
+        suppressRestoreFocusOpenRef.current = true
+        menuTriggerRef.current?.focus()
+        window.setTimeout(() => {
+            suppressRestoreFocusOpenRef.current = false
+        }, 0)
     }, [])
     const onClickOfficialJSON = useCallback(() => exportToJson(format), [format])
     const onClickTavern = useCallback(() => exportToTavern(format), [format])
@@ -131,9 +159,9 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                 openDelay={0}
                 closeDelay={300}
                 open={open}
-                onOpenChange={setOpen}
+                onOpenChange={onMenuOpenChange}
             >
-                <HoverCard.Trigger>
+                <HoverCard.Trigger ref={menuTriggerRef} tabIndex={0}>
                     <MenuItem
                         className={isCollapsedSidebar
                             ? 'ce-nav-trigger ce-nav-trigger-collapsed'
@@ -149,7 +177,7 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                 </HoverCard.Trigger>
                 <Portal
                     container={isMobile ? container : document.body}
-                    forceMount={open || jsonOpen || settingOpen || exportOpen}
+                    forceMount={open}
                 >
                     <HoverCard.Content
                         className={`
@@ -172,14 +200,12 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                         alignOffset={isMobile ? 0 : -64}
                         collisionPadding={isMobile ? 0 : 8}
                     >
-                        <SettingDialog
-                            open={settingOpen}
-                            onOpenChange={setSettingOpen}
-                        >
-                            <div className="row-full">
-                                <MenuItem text={t('Setting')} icon={IconSetting} />
-                            </div>
-                        </SettingDialog>
+                        <MenuItem
+                            text={t('Setting')}
+                            icon={IconSetting}
+                            className="row-full"
+                            onClick={onClickSetting}
+                        />
 
                         <MenuItem
                             text={t('Copy Text')}
@@ -206,55 +232,18 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                             className="row-half"
                             onClick={onClickHtml}
                         />
-                        <Dialog.Root
-                            open={jsonOpen}
-                            onOpenChange={setJsonOpen}
-                        >
-                            <Dialog.Trigger asChild>
-                                <MenuItem
-                                    text={t('JSON')}
-                                    icon={IconJSON}
-                                    className="row-half"
-                                    onClick={onClickJSON}
-                                />
-                            </Dialog.Trigger>
-                            <Dialog.Portal>
-                                <Dialog.Overlay className="DialogOverlay" />
-                                <Dialog.Content className="DialogContent" style={{ width: '320px' }}>
-                                    <Dialog.Title className="DialogTitle">{t('JSON')}</Dialog.Title>
-                                    <MenuItem
-                                        text={t('OpenAI Official Format')}
-                                        icon={IconCopy}
-                                        className="row-full"
-                                        onClick={onClickOfficialJSON}
-                                    />
-                                    <MenuItem
-                                        text="JSONL (TavernAI, SillyTavern)"
-                                        icon={IconCopy}
-                                        className="row-full"
-                                        onClick={onClickTavern}
-                                    />
-                                    <MenuItem
-                                        text="Ooba (text-generation-webui)"
-                                        icon={IconCopy}
-                                        className="row-full"
-                                        onClick={onClickOoba}
-                                    />
-                                </Dialog.Content>
-                            </Dialog.Portal>
-                        </Dialog.Root>
-                        <ExportDialog
-                            format={format}
-                            open={exportOpen}
-                            onOpenChange={setExportOpen}
-                        >
-                            <div className="row-full">
-                                <MenuItem
-                                    text={t('Export All')}
-                                    icon={IconZip}
-                                />
-                            </div>
-                        </ExportDialog>
+                        <MenuItem
+                            text={t('JSON')}
+                            icon={IconJSON}
+                            className="row-half"
+                            onClick={onClickJSON}
+                        />
+                        <MenuItem
+                            text={t('Export All')}
+                            icon={IconZip}
+                            className="row-full"
+                            onClick={onClickExport}
+                        />
 
                         {!isMobile && (
                             <HoverCard.Arrow
@@ -270,6 +259,54 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                     </HoverCard.Content>
                 </Portal>
             </HoverCard.Root>
+
+            <SettingDialog
+                open={settingOpen}
+                onOpenChange={setSettingOpen}
+                onCloseAutoFocus={restoreMenuFocus}
+            />
+
+            <Dialog.Root
+                open={jsonOpen}
+                onOpenChange={setJsonOpen}
+            >
+                <Dialog.Portal>
+                    <Dialog.Overlay className="DialogOverlay" />
+                    <Dialog.Content
+                        className="DialogContent"
+                        style={{ width: '320px' }}
+                        onCloseAutoFocus={restoreMenuFocus}
+                    >
+                        <Dialog.Title className="DialogTitle">{t('JSON')}</Dialog.Title>
+                        <MenuItem
+                            text={t('OpenAI Official Format')}
+                            icon={IconCopy}
+                            className="row-full"
+                            onClick={onClickOfficialJSON}
+                        />
+                        <MenuItem
+                            text="JSONL (TavernAI, SillyTavern)"
+                            icon={IconCopy}
+                            className="row-full"
+                            onClick={onClickTavern}
+                        />
+                        <MenuItem
+                            text="Ooba (text-generation-webui)"
+                            icon={IconCopy}
+                            className="row-full"
+                            onClick={onClickOoba}
+                        />
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
+
+            <ExportDialog
+                format={format}
+                open={exportOpen}
+                onOpenChange={setExportOpen}
+                onCloseAutoFocus={restoreMenuFocus}
+            />
+
             {!isCollapsedSidebar && <Divider />}
         </>
     )

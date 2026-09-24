@@ -19,11 +19,13 @@ function Variable({ name, title }: { name: string, title: string }) {
 interface SettingDialogProps {
     open: boolean
     onOpenChange: (value: boolean) => void
+    onCloseAutoFocus?: (event: Event) => void
 }
 
 export const SettingDialog: FC<SettingDialogProps> = ({
     open,
     onOpenChange,
+    onCloseAutoFocus,
     children,
 }) => {
     const {
@@ -58,12 +60,14 @@ export const SettingDialog: FC<SettingDialogProps> = ({
             open={open}
             onOpenChange={onOpenChange}
         >
-            <Dialog.Trigger asChild>
-                {children}
-            </Dialog.Trigger>
+            {children && (
+                <Dialog.Trigger asChild>
+                    {children}
+                </Dialog.Trigger>
+            )}
             <Dialog.Portal>
                 <Dialog.Overlay className="DialogOverlay" />
-                <Dialog.Content className="DialogContent">
+                <Dialog.Content className="DialogContent" onCloseAutoFocus={onCloseAutoFocus}>
                     <Dialog.Title className="DialogTitle">{t('Exporter Settings')}</Dialog.Title>
                     <div className="DialogBody">
                         <dl className="space-y-6">
