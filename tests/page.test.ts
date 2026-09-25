@@ -26,7 +26,6 @@ describe('getChatIdFromUrl', () => {
     })
 })
 
-
 describe('isExporterRoute', () => {
     it.each<[string, boolean]>([
         ['/', true],
