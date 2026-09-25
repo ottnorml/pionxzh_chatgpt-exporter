@@ -12,6 +12,9 @@ import './styles/missing-tailwind.css'
 const PROFILE_BUTTON_SELECTOR = '[data-testid="accounts-profile-button"]'
 const SIDEBAR_SCROLL_SELECTOR = '[data-app-action-sidebar-scroll]'
 const AUTOMATIONS_SELECTOR = '[data-sidebar-destination="builtin:automations"]'
+// The redesigned navigation rail keeps the help and profile menus in its footer.
+const RAIL_MENU_BUTTON_SELECTOR = '[data-app-navigation-rail] button[aria-haspopup="menu"]'
+const SHARE_MENU_SELECTOR = 'div[role="presentation"] > .w-full > div >.flex.w-full'
 
 interface NavMenuMount {
     target: Element
@@ -34,6 +37,7 @@ function main() {
         document.head.append(styleEl)
 
         const injectionMap = new Map<Element, Element>()
+        let chatId = ''
 
         const injectNavMenu = ({ target, insert }: NavMenuMount) => {
             if (injectionMap.has(target)) return
@@ -48,12 +52,15 @@ function main() {
 
         const syncNavMenu = () => {
             if (!isExporterRoute()) {
+                chatId = ''
                 injectionMap.forEach(container => container.remove())
                 injectionMap.clear()
                 return
             }
 
-            const mounts = getNavMenuMounts()
+            if (isSharePage() || !getChatIdFromUrl()) chatId = ''
+
+            const mounts = getMenuMounts()
             const activeTargets = new Set(mounts.map(({ target }) => target))
             injectionMap.forEach((container, target) => {
                 if (!target.isConnected || !container.isConnected || !activeTargets.has(target)) {
@@ -67,21 +74,13 @@ function main() {
 
         // Sentinel handles new sidebar nodes immediately. Polling remains as a
         // fallback for UI variants that replace or remove injected siblings.
-        for (const selector of [PROFILE_BUTTON_SELECTOR, SIDEBAR_SCROLL_SELECTOR, AUTOMATIONS_SELECTOR]) {
+        for (const selector of [PROFILE_BUTTON_SELECTOR, SIDEBAR_SCROLL_SELECTOR, RAIL_MENU_BUTTON_SELECTOR, AUTOMATIONS_SELECTOR, SHARE_MENU_SELECTOR]) {
             sentinel.on(selector, syncNavMenu)
         }
         syncNavMenu()
         setInterval(syncNavMenu, 1000)
 
-        // Support for share page
-        if (isSharePage()) {
-            sentinel.on(`div[role="presentation"] > .w-full > div >.flex.w-full`, (target) => {
-                target.prepend(getMenuContainer())
-            })
-        }
-
         /** Insert timestamp to the bottom right of each message */
-        let chatId = ''
         sentinel.on('[role="presentation"]', async () => {
             // Share pages carry a share id, not a conversation id, so the
             // conversation API below would 404 on them.
@@ -91,7 +90,7 @@ function main() {
             if (!currentChatId || currentChatId === chatId) return
             chatId = currentChatId
 
-            const rawConversation = await fetchConversation(chatId, false)
+            const rawConversation = await fetchConversation(chatId)
             const { conversationNodes } = processConversation(rawConversation)
 
             const threadContents = Array.from(document.querySelectorAll('main [data-testid^="conversation-turn-"] [data-message-id]'))
@@ -136,6 +135,17 @@ function getNavMenuInsertionTarget(target: Element) {
     return wrapper
 }
 
+function getMenuMounts(): NavMenuMount[] {
+    if (isSharePage()) {
+        return Array.from(document.querySelectorAll(SHARE_MENU_SELECTOR)).map(target => ({
+            target,
+            insert: container => target.prepend(container),
+        }))
+    }
+
+    return getNavMenuMounts()
+}
+
 function getNavMenuMounts(): NavMenuMount[] {
     const profileButtons = Array.from(document.querySelectorAll(PROFILE_BUTTON_SELECTOR))
     if (profileButtons.length > 0) {
@@ -153,6 +163,15 @@ function getNavMenuMounts(): NavMenuMount[] {
             target,
             insert: container => target.prepend(container),
         }))
+    }
+
+    // Place the menu above the first footer menu, which is the help menu.
+    const railMenuButton = document.querySelector(RAIL_MENU_BUTTON_SELECTOR)
+    if (railMenuButton) {
+        return [{
+            target: railMenuButton,
+            insert: container => getNavMenuInsertionTarget(railMenuButton).before(container),
+        }]
     }
 
     return Array.from(document.querySelectorAll(AUTOMATIONS_SELECTOR)).map(target => ({

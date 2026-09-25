@@ -2,11 +2,12 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { useTranslation } from 'react-i18next'
 import type { ChangeEvent } from 'preact/compat'
-import { archiveConversation, deleteConversation, fetchAllConversations, fetchConversation, fetchConversationsPage, fetchProjects, probeApi } from '../api'
+import { archiveConversation, deleteConversation, fetchAllConversations, fetchConversation, fetchConversationsPage, fetchProjects, probeApi, withImageAssets } from '../api'
 import { EXPORT_OPERATION_BATCH, KEY_EXPORTED_UPDATE_TIMES } from '../constants'
 import { exportAllToHtml } from '../exporter/html'
 import { exportAllToJson, exportAllToOfficialJson } from '../exporter/json'
 import { exportAllToMarkdown } from '../exporter/markdown'
+import { applyHead, refreshConversationList } from '../utils/conversationList'
 import { RequestQueue } from '../utils/queue'
 import { ScriptStorage } from '../utils/storage'
 import { sleep } from '../utils/utils'
@@ -21,6 +22,29 @@ import { useSettingContext } from './SettingContext'
  * Lets the parent gate ESC / outside-click dismissal without lifting state.
  */
 const exportingRef = { current: false }
+
+/**
+ * Raw conversations fetched by batch exports, kept for the page lifetime so
+ * exporting the same selection again (e.g. in another format) skips the API.
+ * An entry is reused only while the list's `update_time` still matches.
+ */
+const conversationCache = new Map<string, { updateTime: ApiConversationItem['update_time'], conversation: ApiConversationWithId }>()
+
+/**
+ * The main conversation list from the last load, shown right away when the
+ * dialog reopens and then refreshed from the head. Project lists are not
+ * cached: they page by cursor, so the head refresh does not apply as is.
+ */
+let listCache: { limit: number, items: ApiConversationItem[], hasMore: boolean, total: number | null } | null = null
+
+function dropFromListCache(removed: ApiConversationItem[]) {
+    if (!listCache) return
+    const ids = new Set(removed.map(c => c.id))
+    listCache = { ...listCache, items: listCache.items.filter(c => !ids.has(c.id)) }
+}
+
+/** Cap on how many skipped titles the end-of-export alert lists */
+const MAX_SKIPPED_SHOWN = 20
 
 // ---------------------------------------------------------------------------
 // Utilities
@@ -431,6 +455,8 @@ const DialogContent: FC<DialogContentProps> = ({ format }) => {
     const totalBatchesRef = useRef(0)
     /** Set to true when the user clicks Cancel — prevents the 'done' handler from starting the next batch */
     const cancelledRef = useRef(false)
+    /** Conversations the queue gave up on, accumulated across every batch of the current export */
+    const skippedRef = useRef<string[]>([])
     /** Incremented on each new fetch; callbacks check this to discard stale results after remount */
     const fetchGenRef = useRef(0)
 
@@ -453,8 +479,21 @@ const DialogContent: FC<DialogContentProps> = ({ format }) => {
 
     const startApiBatch = useCallback((chunk: ApiConversationItem[]) => {
         requestQueue.clear()
-        chunk.forEach(({ id, title }) => {
-            requestQueue.add({ name: title, request: () => fetchConversation(id, exportType !== 'JSON') })
+        chunk.forEach(({ id, title, update_time }) => {
+            const entry = conversationCache.get(id)
+            const cached = entry && entry.updateTime === update_time ? entry.conversation : undefined
+            requestQueue.add({
+                name: title,
+                cached: !!cached,
+                request: async () => {
+                    let conversation = cached
+                    if (!conversation) {
+                        conversation = await fetchConversation(id)
+                        conversationCache.set(id, { updateTime: update_time, conversation })
+                    }
+                    return exportType === 'JSON' ? conversation : withImageAssets(conversation)
+                },
+            })
         })
         requestQueue.start()
     }, [requestQueue, exportType])
@@ -510,6 +549,7 @@ const DialogContent: FC<DialogContentProps> = ({ format }) => {
                 // Only conversations that were actually exported successfully get recorded
                 markExported(results)
             }
+            skippedRef.current.push(...requestQueue.getSkipped())
             if (partIndex < totalBatches) {
                 await sleep(400)
                 batchIndexRef.current++
@@ -518,15 +558,22 @@ const DialogContent: FC<DialogContentProps> = ({ format }) => {
             }
             else {
                 setProcessing(false)
+                const skipped = skippedRef.current
+                if (skipped.length > 0) {
+                    const shown = skipped.slice(0, MAX_SKIPPED_SHOWN).map(name => `- ${name}`)
+                    if (skipped.length > MAX_SKIPPED_SHOWN) shown.push('- …')
+                    alert(`${t('Export Skipped Message', { n: skipped.length })}\n\n${shown.join('\n')}`)
+                }
             }
         })
         return () => off()
-    }, [requestQueue, exportAllOptions, exportType, format, metaList, startApiBatch, selectedProject])
+    }, [requestQueue, exportAllOptions, exportType, format, metaList, startApiBatch, selectedProject, t])
 
     useEffect(() => {
         const off = archiveQueue.on('done', () => {
             setProcessing(false)
             setApiConversations(prev => prev.filter(c => !selected.some(s => s.id === c.id)))
+            dropFromListCache(selected)
             setSelected([])
             alert(t('Conversation Archived Message'))
         })
@@ -537,6 +584,7 @@ const DialogContent: FC<DialogContentProps> = ({ format }) => {
         const off = deleteQueue.on('done', () => {
             setProcessing(false)
             setApiConversations(prev => prev.filter(c => !selected.some(s => s.id === c.id)))
+            dropFromListCache(selected)
             setSelected([])
             alert(t('Conversation Deleted Message'))
         })
@@ -553,6 +601,7 @@ const DialogContent: FC<DialogContentProps> = ({ format }) => {
     const exportAllFromApi = useCallback(() => {
         if (disabled) return
         cancelledRef.current = false
+        skippedRef.current = []
         const chunks = chunkArray(selected, EXPORT_OPERATION_BATCH)
         pendingBatchesRef.current = chunks
         batchIndexRef.current = 0
@@ -640,16 +689,61 @@ const DialogContent: FC<DialogContentProps> = ({ format }) => {
         const gen = ++fetchGenRef.current
         const alive = () => gen === fetchGenRef.current
         setSelected([])
+
+        const cache = selectedProjectId === null && listCache?.limit === exportAllLimit ? listCache : null
+        if (cache) {
+            setApiConversations(cache.items)
+            setHasMore(cache.hasMore)
+            setTotalAvailable(cache.total)
+            setLoading(false)
+            refreshConversationList(
+                cache.items,
+                (offset, limit) => fetchConversationsPage(null, offset, limit),
+                EXPORT_OPERATION_BATCH,
+                exportAllLimit,
+            )
+                .then(({ head, total }) => {
+                    // Merge onto the latest cache: "Load more" may have appended while this ran
+                    if (listCache) {
+                        listCache = {
+                            ...listCache,
+                            items: applyHead(head, listCache.items),
+                            total: listCache.total !== null ? total : null,
+                        }
+                    }
+                    if (!alive() || !listCache) return
+                    setApiConversations(prev => applyHead(head, prev))
+                    setTotalAvailable(listCache.total)
+                    // Selections made before the refresh landed must carry the new update_time
+                    const byId = new Map(head.map(c => [c.id, c]))
+                    setSelected(prev => prev.map(c => byId.get(c.id) ?? c))
+                })
+                .catch(err => console.error('Error refreshing conversations:', err))
+            return
+        }
+
         setApiConversations([])
         setHasMore(false)
         setTotalAvailable(null)
         setLoading(true)
+        let loadedHasMore = false
+        let loadFailed = false
         fetchAllConversations(
             selectedProjectId,
             exportAllLimit,
             (batch) => { if (alive()) setApiConversations(prev => [...prev, ...batch]) },
-            (hasMore) => { if (alive()) setHasMore(hasMore) },
+            (hasMore) => {
+                loadedHasMore = hasMore
+                if (alive()) setHasMore(hasMore)
+            },
+            () => { loadFailed = true },
         )
+            .then((items) => {
+                // A list cut short by an error would hide its tail until reload
+                if (selectedProjectId === null && items.length > 0 && !loadFailed) {
+                    listCache = { limit: exportAllLimit, items, hasMore: loadedHasMore, total: null }
+                }
+            })
             .catch((err: Error) => {
                 if (!alive()) return
                 console.error('Error fetching conversations:', err)
@@ -665,10 +759,17 @@ const DialogContent: FC<DialogContentProps> = ({ format }) => {
             const page = await fetchConversationsPage(selectedProjectId, apiConversations.length, EXPORT_OPERATION_BATCH)
             setApiConversations(prev => [...prev, ...page.items])
             if (page.total !== null) setTotalAvailable(page.total)
-            setHasMore(
-                page.items.length >= EXPORT_OPERATION_BATCH
-                && (page.total === null || apiConversations.length + page.items.length < page.total),
-            )
+            const more = page.items.length >= EXPORT_OPERATION_BATCH
+                && (page.total === null || apiConversations.length + page.items.length < page.total)
+            setHasMore(more)
+            if (selectedProjectId === null && listCache) {
+                listCache = {
+                    ...listCache,
+                    items: [...listCache.items, ...page.items],
+                    hasMore: more,
+                    total: page.total ?? listCache.total,
+                }
+            }
         }
         catch (err) {
             console.error('loadMore error', err)
