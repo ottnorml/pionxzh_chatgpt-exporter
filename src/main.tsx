@@ -1,7 +1,7 @@
 import { render } from 'preact'
 import sentinel from 'sentinel-js'
 import { fetchConversation, processConversation } from './api'
-import { getChatIdFromUrl, isSharePage } from './page'
+import { getChatIdFromUrl, isExporterRoute, isSharePage } from './page'
 import { watchTemporaryChatId } from './temporaryChat'
 import { Menu } from './ui/Menu'
 import { onloadSafe } from './utils/utils'
@@ -47,6 +47,12 @@ function main() {
         }
 
         const syncNavMenu = () => {
+            if (!isExporterRoute()) {
+                injectionMap.forEach(container => container.remove())
+                injectionMap.clear()
+                return
+            }
+
             const mounts = getNavMenuMounts()
             const activeTargets = new Set(mounts.map(({ target }) => target))
             injectionMap.forEach((container, target) => {
