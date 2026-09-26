@@ -40,6 +40,15 @@ declare global {
     }
 }
 
+export function isExporterRoute(pathname = location.pathname) {
+    return pathname === '/'
+        || pathname.startsWith('/c/')
+        || pathname.startsWith('/g/')
+        || pathname === '/gpts'
+        || pathname.startsWith('/gpts/')
+        || pathname.startsWith('/share/')
+}
+
 export function getChatIdFromUrl() {
     // /share/1e5sf-asdf-1234
     // /share/e/1e5sf-asdf-1234

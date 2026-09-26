@@ -1,7 +1,7 @@
 import { render } from 'preact'
 import sentinel from 'sentinel-js'
 import { fetchConversation, processConversation } from './api'
-import { getChatIdFromUrl, isSharePage } from './page'
+import { getChatIdFromUrl, isExporterRoute, isSharePage } from './page'
 import { watchTemporaryChatId } from './temporaryChat'
 import { Menu } from './ui/Menu'
 import { onloadSafe } from './utils/utils'
@@ -23,6 +23,8 @@ const AUTOMATIONS_SELECTOR = '[data-sidebar-destination="builtin:automations"]'
 const MESSAGE_UNIT_SELECTOR = '[data-chatgpt-conversation-selection-target] [data-chatgpt-search-message-ids]'
 // Added 2026-09-25. The rail keeps the help and profile menus in its footer.
 const RAIL_MENU_BUTTON_SELECTOR = '[data-app-navigation-rail] button[aria-haspopup="menu"]'
+// Added 2024-09-07.
+const SHARE_MENU_SELECTOR = 'div[role="presentation"] > .w-full > div >.flex.w-full'
 
 interface NavMenuMount {
     target: Element
@@ -44,7 +46,13 @@ function main() {
         styleEl.id = 'sentinel-css'
         document.head.append(styleEl)
 
-        const injectionMap = new Map<Element, Element>()
+        const injectionMap = new Map<Element, HTMLDivElement>()
+        let chatId = ''
+
+        const removeMenuContainer = (container: HTMLDivElement) => {
+            render(null, container)
+            container.remove()
+        }
 
         const injectNavMenu = ({ target, insert }: NavMenuMount) => {
             if (injectionMap.has(target)) return
@@ -58,11 +66,21 @@ function main() {
         }
 
         const syncNavMenu = () => {
-            const mounts = getNavMenuMounts()
+            if (!isExporterRoute()) {
+                chatId = ''
+                injectionMap.forEach(removeMenuContainer)
+                injectionMap.clear()
+                document.body.removeAttribute('data-time-format')
+                return
+            }
+
+            if (isSharePage() || !getChatIdFromUrl()) chatId = ''
+
+            const mounts = getMenuMounts()
             const activeTargets = new Set(mounts.map(({ target }) => target))
             injectionMap.forEach((container, target) => {
                 if (!target.isConnected || !container.isConnected || !activeTargets.has(target)) {
-                    container.remove()
+                    removeMenuContainer(container)
                     injectionMap.delete(target)
                 }
             })
@@ -72,21 +90,13 @@ function main() {
 
         // Sentinel handles new sidebar nodes immediately. Polling remains as a
         // fallback for UI variants that replace or remove injected siblings.
-        for (const selector of [PROFILE_BUTTON_SELECTOR, SIDEBAR_SCROLL_SELECTOR, RAIL_MENU_BUTTON_SELECTOR, AUTOMATIONS_SELECTOR]) {
+        for (const selector of [PROFILE_BUTTON_SELECTOR, SIDEBAR_SCROLL_SELECTOR, RAIL_MENU_BUTTON_SELECTOR, AUTOMATIONS_SELECTOR, SHARE_MENU_SELECTOR]) {
             sentinel.on(selector, syncNavMenu)
         }
         syncNavMenu()
         setInterval(syncNavMenu, 1000)
 
-        // Support for share page. Added 2024-09-07.
-        if (isSharePage()) {
-            sentinel.on(`div[role="presentation"] > .w-full > div >.flex.w-full`, (target) => {
-                target.prepend(getMenuContainer())
-            })
-        }
-
         /** Insert timestamp to the bottom right of each message. Added 2023-11-13. */
-        let chatId = ''
         sentinel.on('[role="presentation"]', async () => {
             // Share pages carry a share id, not a conversation id, so the
             // conversation API below would 404 on them.
@@ -204,6 +214,17 @@ function getNavMenuInsertionTarget(target: Element) {
     if (!wrapper || wrapper.children.length !== 1) return target
 
     return wrapper
+}
+
+function getMenuMounts(): NavMenuMount[] {
+    if (isSharePage()) {
+        return Array.from(document.querySelectorAll(SHARE_MENU_SELECTOR)).map(target => ({
+            target,
+            insert: container => target.prepend(container),
+        }))
+    }
+
+    return getNavMenuMounts()
 }
 
 function getNavMenuMounts(): NavMenuMount[] {

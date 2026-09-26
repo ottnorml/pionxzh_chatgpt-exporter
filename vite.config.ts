@@ -26,30 +26,12 @@ export default defineConfig({
                     'zh-TW': packageJson['description:zh-TW'],
                 },
                 'license': packageJson.license,
+                // ChatGPT is a SPA. Load on every same-origin route so the
+                // exporter can mount/unmount itself when navigation crosses
+                // between supported and unsupported paths without a reload.
                 'match': [
-                    'https://chat.openai.com/',
-                    // support https://chat.openai.com/?model={model}
-                    'https://chat.openai.com/?*',
-                    // support https://chat.openai.com/c/123456789
-                    'https://chat.openai.com/c/*',
-                    // support https://chat.openai.com/g/g-123456789
-                    'https://chat.openai.com/g/*',
-                    // support https://chat.openai.com/gpts/
-                    'https://chat.openai.com/gpts',
-                    'https://chat.openai.com/gpts/*',
-                    // support https://chat.openai.com/share/123456789
-                    'https://chat.openai.com/share/*',
-                    // support https://chat.openai.com/share/123456789/continue
-                    'https://chat.openai.com/share/*/continue',
-
-                    'https://chatgpt.com/',
-                    'https://chatgpt.com/?*',
-                    'https://chatgpt.com/c/*',
-                    'https://chatgpt.com/g/*',
-                    'https://chatgpt.com/gpts',
-                    'https://chatgpt.com/gpts/*',
-                    'https://chatgpt.com/share/*',
-                    'https://chatgpt.com/share/*/continue',
+                    'https://chat.openai.com/*',
+                    'https://chatgpt.com/*',
                 ],
                 'icon': 'https://chatgpt.com/favicon.ico',
                 'run-at': 'document-end',
