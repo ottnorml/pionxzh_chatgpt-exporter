@@ -131,6 +131,9 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
     const width = useWindowResize(() => window.innerWidth)
     const isMobile = width < 768
     const isCollapsedSidebar = useCollapsedSidebar(container, isMobile)
+    const triggerClassName = isCollapsedSidebar
+        ? 'ce-nav-trigger ce-nav-trigger-collapsed'
+        : 'ce-nav-trigger border-0 ms-2 me-1.5 mb-2'
 
     return (
         <>
@@ -157,9 +160,7 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                             transition-colors duration-200
                             cursor-pointer
                             border border-menu
-                            ${isCollapsedSidebar
-                    ? 'ce-nav-trigger ce-nav-trigger-collapsed'
-                    : 'ce-nav-trigger border-0 ms-2 me-1.5 mb-2'}`}
+                            ${triggerClassName}`}
                         aria-label={t('ExportHelper')}
                     >
                         <IconArrowRightFromBracket />
