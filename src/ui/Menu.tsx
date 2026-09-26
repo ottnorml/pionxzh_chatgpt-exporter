@@ -81,6 +81,8 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
     const [exportOpen, setExportOpen] = useState(false)
     const [settingOpen, setSettingOpen] = useState(false)
     const menuTriggerRef = useRef<HTMLButtonElement>(null)
+    const menuOpenRef = useRef(false)
+    const skipMenuRestoreFocusRef = useRef(false)
 
     const {
         format,
@@ -105,20 +107,34 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
     const onClickPng = useCallback(() => exportToPng(format), [format])
     const onClickMarkdown = useCallback(() => exportToMarkdown(format, metaList), [format, metaList])
     const onClickHtml = useCallback(() => exportToHtml(format, metaList), [format, metaList])
-    const onClickJSON = useCallback(() => {
+    const closeMenuForDialog = useCallback(() => {
+        if (menuOpenRef.current) skipMenuRestoreFocusRef.current = true
+        menuOpenRef.current = false
         setOpen(false)
+    }, [])
+    const onClickJSON = useCallback(() => {
+        closeMenuForDialog()
         setJsonOpen(true)
         return true
-    }, [])
+    }, [closeMenuForDialog])
     const onClickSetting = useCallback(() => {
-        setOpen(false)
+        closeMenuForDialog()
         setSettingOpen(true)
         return true
-    }, [])
+    }, [closeMenuForDialog])
     const onClickExport = useCallback(() => {
-        setOpen(false)
+        closeMenuForDialog()
         setExportOpen(true)
         return true
+    }, [closeMenuForDialog])
+    const onMenuOpenChange = useCallback((nextOpen: boolean) => {
+        menuOpenRef.current = nextOpen
+        setOpen(nextOpen)
+    }, [])
+    const onMenuCloseAutoFocus = useCallback((event: Event) => {
+        if (!skipMenuRestoreFocusRef.current) return
+        skipMenuRestoreFocusRef.current = false
+        event.preventDefault()
     }, [])
     const restoreMenuFocus = useCallback((event: Event) => {
         event.preventDefault()
@@ -147,7 +163,7 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
 
             <Popover.Root
                 open={open}
-                onOpenChange={setOpen}
+                onOpenChange={onMenuOpenChange}
             >
                 <Popover.Trigger asChild>
                     <button
@@ -170,6 +186,7 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                 <Popover.Portal container={isMobile ? container : document.body}>
                     <Popover.Content
                         aria-label={t('ExportHelper')}
+                        onCloseAutoFocus={onMenuCloseAutoFocus}
                         className={`
                         grid grid-cols-2
                         bg-menu
