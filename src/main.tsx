@@ -70,6 +70,7 @@ function main() {
                 chatId = ''
                 injectionMap.forEach(removeMenuContainer)
                 injectionMap.clear()
+                document.body.removeAttribute('data-time-format')
                 return
             }
 
