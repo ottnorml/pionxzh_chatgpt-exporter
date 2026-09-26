@@ -169,6 +169,7 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                 </Popover.Trigger>
                 <Popover.Portal container={isMobile ? container : document.body}>
                     <Popover.Content
+                        aria-label={t('ExportHelper')}
                         className={`
                         grid grid-cols-2
                         bg-menu
