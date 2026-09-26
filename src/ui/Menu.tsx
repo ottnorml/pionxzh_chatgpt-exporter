@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import * as HoverCard from '@radix-ui/react-hover-card'
-import { useCallback, useEffect, useMemo, useState } from 'preact/hooks'
+import * as Popover from '@radix-ui/react-popover'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { useTranslation } from 'react-i18next'
 import { exportToHtml } from '../exporter/html'
 import { exportToPng } from '../exporter/image'
@@ -80,6 +80,7 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
     const [jsonOpen, setJsonOpen] = useState(false)
     const [exportOpen, setExportOpen] = useState(false)
     const [settingOpen, setSettingOpen] = useState(false)
+    const menuTriggerRef = useRef<HTMLButtonElement>(null)
 
     const {
         format,
@@ -105,8 +106,23 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
     const onClickMarkdown = useCallback(() => exportToMarkdown(format, metaList), [format, metaList])
     const onClickHtml = useCallback(() => exportToHtml(format, metaList), [format, metaList])
     const onClickJSON = useCallback(() => {
+        setOpen(false)
         setJsonOpen(true)
         return true
+    }, [])
+    const onClickSetting = useCallback(() => {
+        setOpen(false)
+        setSettingOpen(true)
+        return true
+    }, [])
+    const onClickExport = useCallback(() => {
+        setOpen(false)
+        setExportOpen(true)
+        return true
+    }, [])
+    const restoreMenuFocus = useCallback((event: Event) => {
+        event.preventDefault()
+        menuTriggerRef.current?.focus()
     }, [])
     const onClickOfficialJSON = useCallback(() => exportToJson(format), [format])
     const onClickTavern = useCallback(() => exportToTavern(format), [format])
@@ -115,7 +131,6 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
     const width = useWindowResize(() => window.innerWidth)
     const isMobile = width < 768
     const isCollapsedSidebar = useCollapsedSidebar(container, isMobile)
-    const Portal = isMobile ? 'div' : HoverCard.Portal
 
     return (
         <>
@@ -127,31 +142,32 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                 </div>
             )}
 
-            <HoverCard.Root
-                openDelay={0}
-                closeDelay={300}
+            <Popover.Root
                 open={open}
                 onOpenChange={setOpen}
             >
-                <HoverCard.Trigger>
-                    <MenuItem
-                        className={isCollapsedSidebar
-                            ? 'ce-nav-trigger ce-nav-trigger-collapsed'
-                            : 'ce-nav-trigger border-0 ms-2 me-1.5 mb-2'}
-                        text={t('ExportHelper')}
-                        ariaLabel={t('ExportHelper')}
-                        icon={IconArrowRightFromBracket}
-                        onClick={() => {
-                            setOpen(true)
-                            return true
-                        }}
-                    />
-                </HoverCard.Trigger>
-                <Portal
-                    container={isMobile ? container : document.body}
-                    forceMount={open || jsonOpen || settingOpen || exportOpen}
-                >
-                    <HoverCard.Content
+                <Popover.Trigger asChild>
+                    <button
+                        ref={menuTriggerRef}
+                        type="button"
+                        className={`
+                            menu-item
+                            __menu-item hoverable
+                            flex flex-shrink-0 m-0 items-center gap-3 rounded-lg
+                            transition-colors duration-200
+                            cursor-pointer
+                            border border-menu
+                            ${isCollapsedSidebar
+                    ? 'ce-nav-trigger ce-nav-trigger-collapsed'
+                    : 'ce-nav-trigger border-0 ms-2 me-1.5 mb-2'}`}
+                        aria-label={t('ExportHelper')}
+                    >
+                        <IconArrowRightFromBracket />
+                        <span className="ce-menu-item-text">{t('ExportHelper')}</span>
+                    </button>
+                </Popover.Trigger>
+                <Popover.Portal container={isMobile ? container : document.body}>
+                    <Popover.Content
                         className={`
                         grid grid-cols-2
                         bg-menu
@@ -172,14 +188,12 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                         alignOffset={isMobile ? 0 : -64}
                         collisionPadding={isMobile ? 0 : 8}
                     >
-                        <SettingDialog
-                            open={settingOpen}
-                            onOpenChange={setSettingOpen}
-                        >
-                            <div className="row-full">
-                                <MenuItem text={t('Setting')} icon={IconSetting} />
-                            </div>
-                        </SettingDialog>
+                        <MenuItem
+                            text={t('Setting')}
+                            icon={IconSetting}
+                            className="row-full"
+                            onClick={onClickSetting}
+                        />
 
                         <MenuItem
                             text={t('Copy Text')}
@@ -206,58 +220,21 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                             className="row-half"
                             onClick={onClickHtml}
                         />
-                        <Dialog.Root
-                            open={jsonOpen}
-                            onOpenChange={setJsonOpen}
-                        >
-                            <Dialog.Trigger asChild>
-                                <MenuItem
-                                    text={t('JSON')}
-                                    icon={IconJSON}
-                                    className="row-half"
-                                    onClick={onClickJSON}
-                                />
-                            </Dialog.Trigger>
-                            <Dialog.Portal>
-                                <Dialog.Overlay className="DialogOverlay" />
-                                <Dialog.Content className="DialogContent" style={{ width: '320px' }}>
-                                    <Dialog.Title className="DialogTitle">{t('JSON')}</Dialog.Title>
-                                    <MenuItem
-                                        text={t('OpenAI Official Format')}
-                                        icon={IconCopy}
-                                        className="row-full"
-                                        onClick={onClickOfficialJSON}
-                                    />
-                                    <MenuItem
-                                        text="JSONL (TavernAI, SillyTavern)"
-                                        icon={IconCopy}
-                                        className="row-full"
-                                        onClick={onClickTavern}
-                                    />
-                                    <MenuItem
-                                        text="Ooba (text-generation-webui)"
-                                        icon={IconCopy}
-                                        className="row-full"
-                                        onClick={onClickOoba}
-                                    />
-                                </Dialog.Content>
-                            </Dialog.Portal>
-                        </Dialog.Root>
-                        <ExportDialog
-                            format={format}
-                            open={exportOpen}
-                            onOpenChange={setExportOpen}
-                        >
-                            <div className="row-full">
-                                <MenuItem
-                                    text={t('Export All')}
-                                    icon={IconZip}
-                                />
-                            </div>
-                        </ExportDialog>
+                        <MenuItem
+                            text={t('JSON')}
+                            icon={IconJSON}
+                            className="row-half"
+                            onClick={onClickJSON}
+                        />
+                        <MenuItem
+                            text={t('Export All')}
+                            icon={IconZip}
+                            className="row-full"
+                            onClick={onClickExport}
+                        />
 
                         {!isMobile && (
-                            <HoverCard.Arrow
+                            <Popover.Arrow
                                 width="16"
                                 height="8"
                                 style={{
@@ -267,9 +244,56 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                                 }}
                             />
                         )}
-                    </HoverCard.Content>
-                </Portal>
-            </HoverCard.Root>
+                    </Popover.Content>
+                </Popover.Portal>
+            </Popover.Root>
+
+            <SettingDialog
+                open={settingOpen}
+                onOpenChange={setSettingOpen}
+                onCloseAutoFocus={restoreMenuFocus}
+            />
+
+            <Dialog.Root
+                open={jsonOpen}
+                onOpenChange={setJsonOpen}
+            >
+                <Dialog.Portal>
+                    <Dialog.Overlay className="DialogOverlay" />
+                    <Dialog.Content
+                        className="DialogContent"
+                        style={{ width: '320px' }}
+                        onCloseAutoFocus={restoreMenuFocus}
+                    >
+                        <Dialog.Title className="DialogTitle">{t('JSON')}</Dialog.Title>
+                        <MenuItem
+                            text={t('OpenAI Official Format')}
+                            icon={IconCopy}
+                            className="row-full"
+                            onClick={onClickOfficialJSON}
+                        />
+                        <MenuItem
+                            text="JSONL (TavernAI, SillyTavern)"
+                            icon={IconCopy}
+                            className="row-full"
+                            onClick={onClickTavern}
+                        />
+                        <MenuItem
+                            text="Ooba (text-generation-webui)"
+                            icon={IconCopy}
+                            className="row-full"
+                            onClick={onClickOoba}
+                        />
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
+
+            <ExportDialog
+                format={format}
+                open={exportOpen}
+                onOpenChange={setExportOpen}
+                onCloseAutoFocus={restoreMenuFocus}
+            />
             {!isCollapsedSidebar && <Divider />}
         </>
     )
