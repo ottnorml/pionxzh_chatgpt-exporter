@@ -8,6 +8,9 @@ updates:
     open-pull-requests-limit: 5
     groups:
       npm-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - '*'
         update-types:
           - minor
           - patch
@@ -18,17 +21,6 @@ updates:
       interval: weekly
     open-pull-requests-limit: 3
     groups:
-      github-actions-develop:
-        patterns:
-          - '*'
-
-  - package-ecosystem: github-actions
-    directory: /
-    target-branch: master
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 3
-    groups:
-      github-actions-master:
+      github-actions:
         patterns:
           - '*'
