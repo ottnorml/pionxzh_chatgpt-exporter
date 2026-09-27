@@ -75,7 +75,7 @@ devDependencies:
     version: 1.53.1(eslint@9.39.5)(typescript@5.9.3)
   '@pionxzh/eslint-config':
     specifier: ^2.0.2
-    version: 2.0.2(@eslint-react/eslint-plugin@1.53.1)(@vue/compiler-sfc@3.5.43)(eslint-plugin-react-hooks@4.6.2)(eslint-plugin-react-refresh@0.4.26)(eslint@9.39.5)(typescript@5.9.3)(vitest@5.0.1)
+    version: 2.0.2(@eslint-react/eslint-plugin@1.53.1)(@vue/compiler-sfc@3.5.43)(eslint-plugin-react-hooks@4.6.2)(eslint-plugin-react-refresh@0.5.7)(eslint@9.39.5)(typescript@5.9.3)(vitest@5.0.1)
   '@preact/preset-vite':
     specifier: ^2.10.6
     version: 2.10.6(@babel/core@7.29.7)(preact@10.17.1)(vite@8.3.1)
@@ -98,8 +98,8 @@ devDependencies:
     specifier: ^4.6.2
     version: 4.6.2(eslint@9.39.5)
   eslint-plugin-react-refresh:
-    specifier: ^0.4.26
-    version: 0.4.26(eslint@9.39.5)
+    specifier: ^0.5.7
+    version: 0.5.7(eslint@9.39.5)
   happy-dom:
     specifier: ^20.14.5
     version: 20.14.5
@@ -107,8 +107,8 @@ devDependencies:
     specifier: ^9.1.7
     version: 9.1.7
   katex:
-    specifier: ^0.16.11
-    version: 0.16.11
+    specifier: ^0.18.9
+    version: 0.18.9
   lint-staged:
     specifier: ^17.5.1
     version: 17.5.1
@@ -129,7 +129,7 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /@antfu/eslint-config@2.27.3(@eslint-react/eslint-plugin@1.53.1)(@vue/compiler-sfc@3.5.43)(eslint-plugin-react-hooks@4.6.2)(eslint-plugin-react-refresh@0.4.26)(eslint@9.39.5)(typescript@5.9.3)(vitest@5.0.1):
+  /@antfu/eslint-config@2.27.3(@eslint-react/eslint-plugin@1.53.1)(@vue/compiler-sfc@3.5.43)(eslint-plugin-react-hooks@4.6.2)(eslint-plugin-react-refresh@0.5.7)(eslint@9.39.5)(typescript@5.9.3)(vitest@5.0.1):
     resolution: {integrity: sha512-Y2Vh/LvPAaYoyLwCiZHJ7p76LEIGg6debeUA4Qs+KOrlGuXLQWRmdZlC6SB33UDNzXqkFeaXAlEcYUqvYoiMKA==}
     hasBin: true
     peerDependencies:
@@ -197,7 +197,7 @@ packages:
       eslint-plugin-no-only-tests: 3.4.0
       eslint-plugin-perfectionist: 3.9.1(eslint@9.39.5)(typescript@5.9.3)(vue-eslint-parser@9.4.3)
       eslint-plugin-react-hooks: 4.6.2(eslint@9.39.5)
-      eslint-plugin-react-refresh: 0.4.26(eslint@9.39.5)
+      eslint-plugin-react-refresh: 0.5.7(eslint@9.39.5)
       eslint-plugin-regexp: 2.10.0(eslint@9.39.5)
       eslint-plugin-toml: 0.11.1(eslint@9.39.5)
       eslint-plugin-unicorn: 55.0.0(eslint@9.39.5)
@@ -1004,7 +1004,7 @@ packages:
   /@oxc-project/types@0.151.0:
     resolution: {integrity: sha512-J1yXrIlNDZVzE3ada310xeAw7nH8yCAyLPuUIsjKatFPmfn5bS1oW+cM+QsGOtVWd5nhSpbwZWx/rue+r5Z+PA==}
 
-  /@pionxzh/eslint-config@2.0.2(@eslint-react/eslint-plugin@1.53.1)(@vue/compiler-sfc@3.5.43)(eslint-plugin-react-hooks@4.6.2)(eslint-plugin-react-refresh@0.4.26)(eslint@9.39.5)(typescript@5.9.3)(vitest@5.0.1):
+  /@pionxzh/eslint-config@2.0.2(@eslint-react/eslint-plugin@1.53.1)(@vue/compiler-sfc@3.5.43)(eslint-plugin-react-hooks@4.6.2)(eslint-plugin-react-refresh@0.5.7)(eslint@9.39.5)(typescript@5.9.3)(vitest@5.0.1):
     resolution: {integrity: sha512-k2R5dn3+Fd014PzvZ45tJF4u3LUk5YmWKaJuTB/dVcjXfODGIOlSmEDDJlbPNrMzGsi8nfWGUzReLGvK55XcIg==}
     peerDependencies:
       '@eslint-react/eslint-plugin': '*'
@@ -1046,11 +1046,11 @@ packages:
       svelte-eslint-parser:
         optional: true
     dependencies:
-      '@antfu/eslint-config': 2.27.3(@eslint-react/eslint-plugin@1.53.1)(@vue/compiler-sfc@3.5.43)(eslint-plugin-react-hooks@4.6.2)(eslint-plugin-react-refresh@0.4.26)(eslint@9.39.5)(typescript@5.9.3)(vitest@5.0.1)
+      '@antfu/eslint-config': 2.27.3(@eslint-react/eslint-plugin@1.53.1)(@vue/compiler-sfc@3.5.43)(eslint-plugin-react-hooks@4.6.2)(eslint-plugin-react-refresh@0.5.7)(eslint@9.39.5)(typescript@5.9.3)(vitest@5.0.1)
       '@eslint-react/eslint-plugin': 1.53.1(eslint@9.39.5)(typescript@5.9.3)
       eslint: 9.39.5
       eslint-plugin-react-hooks: 4.6.2(eslint@9.39.5)
-      eslint-plugin-react-refresh: 0.4.26(eslint@9.39.5)
+      eslint-plugin-react-refresh: 0.5.7(eslint@9.39.5)
     transitivePeerDependencies:
       - '@eslint/json'
       - '@prettier/plugin-xml'
@@ -2304,9 +2304,9 @@ packages:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
     dev: false
 
-  /commander@8.3.0:
-    resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
-    engines: {node: '>= 12'}
+  /commander@15.0.0:
+    resolution: {integrity: sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==}
+    engines: {node: '>=22.12.0'}
     dev: true
 
   /comment-parser@1.4.0:
@@ -2985,10 +2985,10 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-plugin-react-refresh@0.4.26(eslint@9.39.5):
-    resolution: {integrity: sha512-1RETEylht2O6FM/MvgnyvT+8K21wLqDNg4qD51Zj3guhjt433XbnnkVttHMyaVyAFD03QSV4LPS5iE3VQmO7XQ==}
+  /eslint-plugin-react-refresh@0.5.7(eslint@9.39.5):
+    resolution: {integrity: sha512-XhJSzLljuYD4UjNuFGJu2v7aD3sqNVK12w5/DCUfrNfHWegZo2+TsavNx8MuxMwEquuFAzNbNfXKU0WoZ+YUIg==}
     peerDependencies:
-      eslint: '>=8.40'
+      eslint: ^9 || ^10
     dependencies:
       eslint: 9.39.5
     dev: true
@@ -3856,11 +3856,11 @@ packages:
       set-immediate-shim: 1.0.1
     dev: false
 
-  /katex@0.16.11:
-    resolution: {integrity: sha512-RQrI8rlHY92OLf3rho/Ts8i/XvjgguEjOkO1BEXcU3N8BqPpSzBNwV/G0Ukr+P/l3ivvJUE/Fa/CwbS6HesGNQ==}
+  /katex@0.18.9:
+    resolution: {integrity: sha512-8ad9RyoKsb/g8/yLFE+KAlP+DhbCTRUNi/V9XGsxn0R+trJJltNwzcDNo0q/DEkOy5fQUQTAQyCXCYSE+OakTQ==}
     hasBin: true
     dependencies:
-      commander: 8.3.0
+      commander: 15.0.0
     dev: true
 
   /keyv@4.5.4:
