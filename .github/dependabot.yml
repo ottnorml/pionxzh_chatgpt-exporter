@@ -5,22 +5,102 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 8
     groups:
-      npm-minor-patch:
+      npm-prod-patch:
         applies-to: version-updates
+        dependency-type: production
+        patterns:
+          - '*'
+        update-types:
+          - patch
+
+      npm-prod-minor:
+        applies-to: version-updates
+        dependency-type: production
         patterns:
           - '*'
         update-types:
           - minor
+
+      npm-dev-patch:
+        applies-to: version-updates
+        dependency-type: development
+        patterns:
+          - '*'
+        update-types:
           - patch
+
+      npm-dev-minor:
+        applies-to: version-updates
+        dependency-type: development
+        patterns:
+          - '*'
+        update-types:
+          - minor
+
+      npm-security-prod-patch:
+        applies-to: security-updates
+        dependency-type: production
+        patterns:
+          - '*'
+        update-types:
+          - patch
+
+      npm-security-prod-minor:
+        applies-to: security-updates
+        dependency-type: production
+        patterns:
+          - '*'
+        update-types:
+          - minor
+
+      npm-security-dev-patch:
+        applies-to: security-updates
+        dependency-type: development
+        patterns:
+          - '*'
+        update-types:
+          - patch
+
+      npm-security-dev-minor:
+        applies-to: security-updates
+        dependency-type: development
+        patterns:
+          - '*'
+        update-types:
+          - minor
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 4
     groups:
-      github-actions:
+      github-actions-patch:
+        applies-to: version-updates
         patterns:
           - '*'
+        update-types:
+          - patch
+
+      github-actions-minor:
+        applies-to: version-updates
+        patterns:
+          - '*'
+        update-types:
+          - minor
+
+      github-actions-security-patch:
+        applies-to: security-updates
+        patterns:
+          - '*'
+        update-types:
+          - patch
+
+      github-actions-security-minor:
+        applies-to: security-updates
+        patterns:
+          - '*'
+        update-types:
+          - minor
