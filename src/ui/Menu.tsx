@@ -149,10 +149,6 @@ function MenuInner({ container }: { container: HTMLDivElement }) {
                         text={t('ExportHelper')}
                         ariaLabel={t('ExportHelper')}
                         icon={IconArrowRightFromBracket}
-                        onClick={() => {
-                            setOpen(true)
-                            return true
-                        }}
                     />
                 )}
             >
