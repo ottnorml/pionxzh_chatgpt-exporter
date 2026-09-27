@@ -23,14 +23,16 @@ interface HoverCardProps {
 }
 
 /**
- * The exporter menu. Opens on hover or click, closes after the pointer has
- * left both the trigger and the card, on Escape, or on a click elsewhere.
+ * The exporter menu. Hover opens it temporarily; clicking the trigger pins it
+ * open until the trigger is clicked again, Escape is pressed, or the user
+ * clicks elsewhere.
  */
 export function HoverCard({ open, onOpenChange, keepMounted, isMobile, width, trigger, children }: HoverCardProps) {
     const triggerRef = useRef<HTMLDivElement>(null)
     const cardRef = useRef<HTMLDivElement>(null)
     const arrowRef = useRef<SVGSVGElement>(null)
     const closeTimer = useRef(0)
+    const pinned = useRef(false)
 
     const cancelClose = () => clearTimeout(closeTimer.current)
     const onPointerEnter = (e: PointerEvent) => {
@@ -39,16 +41,27 @@ export function HoverCard({ open, onOpenChange, keepMounted, isMobile, width, tr
         onOpenChange(true)
     }
     const onPointerLeave = (e: PointerEvent) => {
-        if (e.pointerType === 'touch') return
+        if (e.pointerType === 'touch' || pinned.current) return
         cancelClose()
         closeTimer.current = window.setTimeout(() => onOpenChange(false), CLOSE_DELAY)
     }
+    const onTriggerClick = () => {
+        cancelClose()
+        pinned.current = !pinned.current
+        onOpenChange(pinned.current)
+    }
     useEffect(() => cancelClose, [])
+    useEffect(() => {
+        if (!open) pinned.current = false
+    }, [open])
 
     useEffect(() => {
         // While a dialog is open, Escape and clicks belong to it.
         if (!open || keepMounted) return
-        const close = () => onOpenChange(false)
+        const close = () => {
+            pinned.current = false
+            onOpenChange(false)
+        }
         const onPointerDown = (e: PointerEvent) => {
             document.removeEventListener('click', close, true)
             const target = e.target as Node
@@ -149,6 +162,7 @@ export function HoverCard({ open, onOpenChange, keepMounted, isMobile, width, tr
                 ref={triggerRef}
                 onPointerEnter={onPointerEnter}
                 onPointerLeave={onPointerLeave}
+                onClick={onTriggerClick}
             >
                 {trigger}
             </div>
