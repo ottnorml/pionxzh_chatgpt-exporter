@@ -1,13 +1,12 @@
 import { render } from 'preact'
 import sentinel from 'sentinel-js'
-import { fetchConversation, processConversation } from './api'
+import { fetchConversation } from './api'
 import { getChatIdFromUrl, isExporterRoute, isSharePage } from './page'
 import { watchTemporaryChatId } from './temporaryChat'
 import { Menu } from './ui/Menu'
 import { onloadSafe } from './utils/utils'
 
 import './i18n'
-import './styles/missing-tailwind.css'
 
 // ChatGPT A/B tests its layout, so users can get different variants at the
 // same time. Each injection point notes the date it was added. Keep it for at
@@ -23,7 +22,7 @@ const AUTOMATIONS_SELECTOR = '[data-sidebar-destination="builtin:automations"]'
 const MESSAGE_UNIT_SELECTOR = '[data-chatgpt-conversation-selection-target] [data-chatgpt-search-message-ids]'
 // Added 2026-09-25. The rail keeps the help and profile menus in its footer.
 const RAIL_MENU_BUTTON_SELECTOR = '[data-app-navigation-rail] button[aria-haspopup="menu"]'
-// Added 2024-09-07.
+// Share-page injection point.
 const SHARE_MENU_SELECTOR = 'div[role="presentation"] > .w-full > div >.flex.w-full'
 
 interface NavMenuMount {
@@ -47,7 +46,6 @@ function main() {
         document.head.append(styleEl)
 
         const injectionMap = new Map<Element, HTMLDivElement>()
-        let chatId = ''
 
         const removeMenuContainer = (container: HTMLDivElement) => {
             render(null, container)
@@ -67,14 +65,11 @@ function main() {
 
         const syncNavMenu = () => {
             if (!isExporterRoute()) {
-                chatId = ''
                 injectionMap.forEach(removeMenuContainer)
                 injectionMap.clear()
                 document.body.removeAttribute('data-time-format')
                 return
             }
-
-            if (isSharePage() || !getChatIdFromUrl()) chatId = ''
 
             const mounts = getMenuMounts()
             const activeTargets = new Set(mounts.map(({ target }) => target))
@@ -96,30 +91,6 @@ function main() {
         syncNavMenu()
         setInterval(syncNavMenu, 1000)
 
-        /** Insert timestamp to the bottom right of each message. Added 2023-11-13. */
-        sentinel.on('[role="presentation"]', async () => {
-            // Share pages carry a share id, not a conversation id, so the
-            // conversation API below would 404 on them.
-            if (isSharePage()) return
-
-            const currentChatId = getChatIdFromUrl()
-            if (!currentChatId || currentChatId === chatId) return
-            chatId = currentChatId
-
-            const rawConversation = await fetchConversation(chatId)
-            const { conversationNodes } = processConversation(rawConversation)
-
-            const threadContents = Array.from(document.querySelectorAll('main [data-testid^="conversation-turn-"] [data-message-id]'))
-            if (threadContents.length === 0) return
-
-            threadContents.forEach((thread, index) => {
-                const createTime = conversationNodes[index]?.message?.create_time
-                if (!createTime) return
-
-                thread.append(createTimestamp(createTime))
-            })
-        })
-
         watchMessageTimestamps()
     })
 }
@@ -133,6 +104,8 @@ function watchMessageTimestamps() {
     let createTimes: Promise<Map<string, number>> = Promise.resolve(new Map())
     // Ids that were missing after a refetch, so they do not refetch again.
     const missingIds = new Set<string>()
+    // Blocks that miss the first fetch share one refetch.
+    let refetch: Promise<Map<string, number>> | null = null
 
     const loadCreateTimes = async (id: string) => {
         const conversation = await fetchConversation(id)
@@ -153,7 +126,10 @@ function watchMessageTimestamps() {
         return null
     }
 
-    sentinel.on(MESSAGE_UNIT_SELECTOR, async (unit) => {
+    const stamp = async (unit: Element) => {
+        // Menu mirrors the timestamp setting to this attribute, and the
+        // timestamps stay hidden without it, so skip the fetch until then.
+        if (!document.body.hasAttribute('data-time-format')) return
         if (isSharePage()) return
         // Stamp the outermost block only.
         if (unit.parentElement?.closest('[data-chatgpt-search-message-ids]')) return
@@ -163,6 +139,7 @@ function watchMessageTimestamps() {
         if (currentChatId !== chatId) {
             chatId = currentChatId
             missingIds.clear()
+            refetch = null
             createTimes = loadCreateTimes(chatId).catch(() => new Map())
         }
 
@@ -173,20 +150,33 @@ function watchMessageTimestamps() {
         // Messages sent after the first fetch are not in it yet.
         if (!createTime && ids.some(id => !missingIds.has(id)) && currentChatId === chatId) {
             ids.forEach(id => missingIds.add(id))
-            createTimes = loadCreateTimes(chatId).catch(() => new Map())
+            refetch ??= loadCreateTimes(chatId)
+                .catch(() => new Map<string, number>())
+                .finally(() => {
+                    refetch = null
+                })
+            createTimes = refetch
             createTime = findCreateTime(await createTimes, ids)
         }
 
         if (!createTime || !unit.isConnected || unit.querySelector(':scope > time[data-ce-timestamp]')) return
         unit.append(createTimestamp(createTime))
-    })
+    }
+
+    sentinel.on(MESSAGE_UNIT_SELECTOR, stamp)
+
+    // Blocks that mounted while the setting was off, or before Menu applied
+    // it on load, were skipped. Stamp them once it turns on.
+    new MutationObserver(() => {
+        document.querySelectorAll(MESSAGE_UNIT_SELECTOR).forEach(stamp)
+    }).observe(document.body, { attributes: true, attributeFilter: ['data-time-format'] })
 }
 
 function createTimestamp(createTime: number) {
     const date = new Date(createTime * 1000)
 
     const timestamp = document.createElement('time')
-    timestamp.className = 'ce-timestamp w-full text-sm text-right'
+    timestamp.className = 'ce-timestamp'
     timestamp.setAttribute('data-ce-timestamp', '')
     timestamp.dateTime = date.toISOString()
     timestamp.title = date.toLocaleString()
@@ -203,6 +193,7 @@ function createTimestamp(createTime: number) {
 
 function getMenuContainer() {
     const container = document.createElement('div')
+    container.className = 'ce-root'
     // to overlap on the list section
     container.style.zIndex = '99'
     render(<Menu container={container} />, container)
