@@ -6,7 +6,7 @@ import { escapeHtml } from '../src/exporter/htmlTemplate'
 // Same steps as the markdown exporter
 function format(input: string) {
     const { text, restore } = protectMath(input)
-    return restore(toMarkdown(fromMarkdown(text)))
+    return restore(toMarkdown(fromMarkdown(text), text))
 }
 
 describe('math in markdown export', () => {
@@ -37,7 +37,7 @@ describe('math in markdown export', () => {
 // Same steps as the HTML exporter
 function formatHtml(input: string) {
     const { text, restore } = protectMath(input)
-    return restore(toHtml(fromMarkdown(text)), formula => escapeHtml(toBracketDelimiters(formula)))
+    return restore(toHtml(text), formula => escapeHtml(toBracketDelimiters(formula)))
 }
 
 describe('math in HTML export', () => {
