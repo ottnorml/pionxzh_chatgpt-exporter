@@ -39,7 +39,7 @@ updates:
         update-types:
           - minor
 
-      npm-security-prod:
+      security-prod:
         applies-to: security-updates
         dependency-type: production
         patterns:
@@ -48,7 +48,7 @@ updates:
           - patch
           - minor
 
-      npm-security-dev:
+      security-dev:
         applies-to: security-updates
         dependency-type: development
         patterns:
@@ -77,7 +77,7 @@ updates:
         update-types:
           - minor
 
-      github-actions-security:
+      security-actions:
         applies-to: security-updates
         patterns:
           - '*'
