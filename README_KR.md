@@ -40,7 +40,9 @@
 [Install-1-image]: https://img.shields.io/badge/-Install-blue
 [Install-1-url]: https://greasyfork.org/scripts/456055-chatgpt-exporter
 [Install-2-image]: https://img.shields.io/badge/-Install-blue
-[Install-2-url]: https://raw.githubusercontent.com/pionxzh/chatgpt-exporter/master/dist/chatgpt.user.js
+[Install-2-url]: https://raw.githubusercontent.com/ottnorml/pionxzh_chatgpt-exporter/master/dist/chatgpt.user.js
+
+> **자동 업데이트:** 이 GitHub 포크에서 설치하면 `chatgpt.meta.js`를 사용해 이 포크에서 업데이트를 받습니다. Greasy Fork는 원본 프로젝트의 별도 배포 채널로 버전이 다를 수 있습니다. 업데이트 채널은 자동으로 변경되지 않습니다.
 
 > Tampermonkey를 사용하는 경우 브라우저 설정에서 [`Allow User Scripts`가 활성화되어 있는지](https://www.tampermonkey.net/faq.php?q=Q209) 확인하세요.
 

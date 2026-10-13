@@ -3,6 +3,10 @@ import { defineConfig } from 'vite'
 import monkey, { cdn } from 'vite-plugin-monkey'
 import packageJson from './package.json' with { type: 'json' }
 
+// GitHub release URLs derive from the package homepage (single source of truth).
+const repositoryURL = new URL(packageJson.homepage)
+const rawDistURL = `https://raw.githubusercontent.com${repositoryURL.pathname.replace(/\/$/, '')}/master/dist`
+
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [
@@ -35,9 +39,12 @@ export default defineConfig({
                 ],
                 'icon': 'https://chatgpt.com/favicon.ico',
                 'run-at': 'document-end',
+                'downloadURL': `${rawDistURL}/chatgpt.user.js`,
+                'updateURL': `${rawDistURL}/chatgpt.meta.js`,
             },
             build: {
                 fileName: 'chatgpt.user.js',
+                metaFileName: true,
                 externalGlobals: [
                     ['jszip', cdn.jsdelivr('JSZip', 'dist/jszip.min.js')],
                     // SnapDOM's IIFE exposes its named export as window.snapdom.

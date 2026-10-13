@@ -43,5 +43,15 @@ jobs:
       - name: Test
         run: pnpm run test
 
+
+      - name: Test userscript validator
+        run: pnpm run test:userscript
+
       - name: Build
         run: pnpm run build
+
+      - name: Lint generated userscript artifacts
+        run: pnpm run lint:userscript
+
+      - name: Validate generated userscript artifacts
+        run: pnpm run validate:userscript
