@@ -47,18 +47,22 @@ export function validateUserscriptArtifacts(packageJson, userScript, metadataScr
     const meta = parseUserscript(metadataScript, 'chatgpt.meta.js', errors)
     if (!user || !meta) return errors
 
-    if (user.header !== meta.header)
+    if (user.header !== meta.header) {
         errors.push('Headers differ between chatgpt.user.js and chatgpt.meta.js')
-    if (!user.body.trim())
+    }
+    if (!user.body.trim()) {
         errors.push('chatgpt.user.js is missing executable script code')
-    if (meta.body.trim())
+    }
+    if (meta.body.trim()) {
         errors.push('chatgpt.meta.js contains code after its metadata header')
+    }
 
     let homepage
     try {
         homepage = new URL(packageJson.homepage)
-        if (homepage.origin !== 'https://github.com' || !/^\/[^/]+\/[^/]+\/?$/.test(homepage.pathname))
+        if (homepage.origin !== 'https://github.com' || !/^\/[^/]+\/[^/]+\/?$/.test(homepage.pathname)) {
             throw new Error('homepage must be a GitHub repository URL')
+        }
     }
     catch {
         errors.push('package.json: homepage must be https://github.com/<owner>/<repo>')
@@ -67,10 +71,12 @@ export function validateUserscriptArtifacts(packageJson, userScript, metadataScr
 
     const repositoryURL = homepage.toString().replace(/\/$/, '')
     const expectedRepositoryURL = `${repositoryURL}.git`
-    if (packageJson.repository?.url !== expectedRepositoryURL)
+    if (packageJson.repository?.url !== expectedRepositoryURL) {
         errors.push(`package.json: repository.url must be ${expectedRepositoryURL}`)
-    if (packageJson.bugs?.url !== `${repositoryURL}/issues`)
+    }
+    if (packageJson.bugs?.url !== `${repositoryURL}/issues`) {
         errors.push(`package.json: bugs.url must be ${repositoryURL}/issues`)
+    }
 
     const rawURL = `https://raw.githubusercontent.com${homepage.pathname.replace(/\/$/, '')}/master/dist`
     const expected = {
@@ -88,8 +94,9 @@ export function validateUserscriptArtifacts(packageJson, userScript, metadataScr
     }
 
     for (const [label, parsed] of [['chatgpt.user.js', user], ['chatgpt.meta.js', meta]]) {
-        for (const [key, value] of Object.entries(expected))
+        for (const [key, value] of Object.entries(expected)) {
             expectOne(parsed.entries, key, value, label, errors)
+        }
     }
     return errors
 }
