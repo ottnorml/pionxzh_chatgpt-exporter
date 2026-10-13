@@ -6,7 +6,7 @@ export default pionxzh(
         react: true,
         vue: false,
         yaml: false,
-        ignores: ['*.md', '.release-please-manifest.json'],
+        ignores: ['*.md', '.release-please-manifest.json', 'dist/**'],
     },
     {
         rules: {

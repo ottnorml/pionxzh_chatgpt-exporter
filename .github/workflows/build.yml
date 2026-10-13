@@ -40,8 +40,15 @@ jobs:
       - name: Test
         run: pnpm run test
 
+
       - name: Build
         run: pnpm run build
+
+      - name: Lint generated userscript artifacts
+        run: pnpm run lint:userscript
+
+      - name: Validate generated userscript artifacts
+        run: pnpm run validate:userscript
 
       - name: Commit generated build
         id: commit
@@ -50,7 +57,7 @@ jobs:
           git config --local user.name github-actions[bot]
           git config --global core.autocrlf true
           git config --global core.safecrlf false
-          git add .
+          git add dist/chatgpt.user.js dist/chatgpt.meta.js
           git diff --cached --quiet && exit 0
           git commit -m "chore: ci build"
           echo "created=true" >> "$GITHUB_OUTPUT"

@@ -40,7 +40,9 @@
 [Install-1-image]: https://img.shields.io/badge/-Installer-blue
 [Install-1-url]: https://greasyfork.org/scripts/456055-chatgpt-exporter
 [Install-2-image]: https://img.shields.io/badge/-Installer-blue
-[Install-2-url]: https://raw.githubusercontent.com/pionxzh/chatgpt-exporter/master/dist/chatgpt.user.js
+[Install-2-url]: https://raw.githubusercontent.com/ottnorml/pionxzh_chatgpt-exporter/master/dist/chatgpt.user.js
+
+> **Mises à jour automatiques :** Les installations depuis ce fork GitHub utilisent `chatgpt.meta.js` et reçoivent les mises à jour depuis ce fork. Greasy Fork est la distribution indépendante du projet d’origine ; les versions peuvent différer. Le canal ne change pas automatiquement.
 
 > Assurez-vous que l'option [`Allow User Scripts` est activée](https://www.tampermonkey.net/faq.php?q=Q209) dans les paramètres de votre navigateur pour Tampermonkey.
 

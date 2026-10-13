@@ -40,7 +40,9 @@
 [Install-1-image]: https://img.shields.io/badge/-Install-blue
 [Install-1-url]: https://greasyfork.org/scripts/456055-chatgpt-exporter
 [Install-2-image]: https://img.shields.io/badge/-Install-blue
-[Install-2-url]: https://raw.githubusercontent.com/pionxzh/chatgpt-exporter/master/dist/chatgpt.user.js
+[Install-2-url]: https://raw.githubusercontent.com/ottnorml/pionxzh_chatgpt-exporter/master/dist/chatgpt.user.js
+
+> **Otomatik güncellemeler:** Bu GitHub fork’undan yapılan kurulumlar `chatgpt.meta.js` üzerinden bu fork’tan güncelleme alır. Greasy Fork, özgün projenin bağımsız dağıtımıdır; sürümler farklı olabilir. Güncelleme kanalı otomatik değişmez.
 
 > Tampermonkey için tarayıcı ayarlarınızda [`Allow User Scripts` seçeneğinin etkin olduğundan](https://www.tampermonkey.net/faq.php?q=Q209) emin olun.
 

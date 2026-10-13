@@ -100,6 +100,9 @@ devDependencies:
   eslint-plugin-react-refresh:
     specifier: ^0.4.26
     version: 0.4.26(eslint@9.39.5)
+  eslint-plugin-userscripts:
+    specifier: ^0.5.6
+    version: 0.5.6(eslint@9.39.5)
   happy-dom:
     specifier: ^20.14.5
     version: 20.14.5
@@ -2991,6 +2994,16 @@ packages:
       eslint: '>=8.40'
     dependencies:
       eslint: 9.39.5
+    dev: true
+
+  /eslint-plugin-userscripts@0.5.6(eslint@9.39.5):
+    resolution: {integrity: sha512-/DXb8UKyEkNCzXOA6j4E4rCWn2mLCUw2TMxrzSoz3spi4cyANlE0JNmtRleAmzc1HTUmZXr5fIMCQxyLS73DZQ==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    peerDependencies:
+      eslint: '>=8.40.0 <11'
+    dependencies:
+      eslint: 9.39.5
+      semver: 7.8.5
     dev: true
 
   /eslint-plugin-react-web-api@1.53.1(eslint@9.39.5)(typescript@5.9.3):

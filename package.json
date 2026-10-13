@@ -12,6 +12,14 @@
   "description:zh-TW": "一鍵導出 ChatGPT 對話，輕鬆備份與分享",
   "author": "pionxzh",
   "license": "MIT",
+  "homepage": "https://github.com/ottnorml/pionxzh_chatgpt-exporter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ottnorml/pionxzh_chatgpt-exporter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ottnorml/pionxzh_chatgpt-exporter/issues"
+  },
   "engines": {
     "node": ">=20.0.0"
   },
@@ -26,7 +34,10 @@
     "test": "tsc --noEmit && vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint:userscript": "eslint --config eslint.userscript.config.mjs dist/chatgpt.user.js dist/chatgpt.meta.js",
+    "validate:userscript": "node scripts/validate-userscript.mjs",
+    "check:userscript": "pnpm build && pnpm lint:userscript && pnpm validate:userscript"
   },
   "dependencies": {
     "@zumer/snapdom": "2.24.10",
@@ -62,6 +73,7 @@
     "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.26",
+    "eslint-plugin-userscripts": "^0.5.6",
     "happy-dom": "^20.14.5",
     "husky": "^9.1.7",
     "katex": "^0.16.11",
