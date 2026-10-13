@@ -37,7 +37,6 @@
     "prepare": "husky",
     "lint:userscript": "eslint --config eslint.userscript.config.mjs dist/chatgpt.user.js dist/chatgpt.meta.js",
     "validate:userscript": "node scripts/validate-userscript.mjs",
-    "test:userscript": "node --test tests/validate-userscript.check.mjs",
     "check:userscript": "pnpm build && pnpm lint:userscript && pnpm validate:userscript"
   },
   "dependencies": {
